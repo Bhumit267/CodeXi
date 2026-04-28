@@ -1,6 +1,19 @@
-# CodeXi - Interactive Coding Platform
+<div align="center">
+  <h1>🚀 CodeXi - Interactive Coding Platform</h1>
+  <p>A full-stack, browser-based coding platform heavily inspired by platforms like LeetCode. Solve algorithmic problems, write test code, and securely save custom snippets to the cloud.</p>
+</div>
 
-CodeXi is a full-stack, browser-based coding platform heavily inspired by platforms like LeetCode. It provides a seamless interactive environment for developers to solve algorithmic problems, write test code, and securely save custom snippets to the cloud without needing to install local compilers.
+---
+
+## 📑 Table of Contents
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [Architecture & Working Flow](#%EF%B8%8F-architecture--working-flow)
+- [Getting Started (Installation)](#%EF%B8%8F-getting-started)
+- [Environment Variables](#-environment-variables)
+- [API Endpoints](#-api-endpoints)
+
+---
 
 ## 🚀 Features
 - **Integrated IDE:** Powerful in-browser coding experience powered by Monaco Editor (VS Code engine).
@@ -69,3 +82,81 @@ graph TD
 4. **Code Execution:** When the user clicks "Run", the raw code string and standard input (stdin) are packaged into a JSON payload. Instead of processing this locally, the frontend securely dispatches it to the **Wandbox Execution API**. Wandbox creates an isolated sandbox, compiles the code, executes it, and streams the standard output (`stdout`) or standard error (`stderr`) back to the browser.
 5. **Saving Snippets:** When saving work, the frontend sends the code and a secure **JWT** to the Node.js backend. The Express router verifies the token signature. If authorized, the backend inserts the snippet into the connected **MongoDB** database, linked via a reference to the User's ID.
 6. **Authentication:** User signups are processed by the backend, where plaintext passwords are encrypted via `Bcrypt` before storage. Logins generate a signed JWT returned to the client's local storage for seamless persistent sessions.
+
+---
+
+## ⚙️ Getting Started
+
+Follow these instructions to run the project locally on your machine.
+
+### Prerequisites
+- Node.js (v18+)
+- MongoDB (Local instance or MongoDB Atlas URL)
+
+### 1. Clone the repository
+\`\`\`bash
+git clone https://github.com/Bhumit267/CodeXi.git
+cd CodeXi/code_curator
+\`\`\`
+
+### 2. Setup the Backend
+\`\`\`bash
+cd backend
+npm install
+npm run dev
+\`\`\`
+*(The backend runs on `http://localhost:3000`)*
+
+### 3. Setup the Frontend
+Open a new terminal window:
+\`\`\`bash
+cd frontend
+npm install
+npm run dev
+\`\`\`
+*(The frontend runs on `http://localhost:5173`)*
+
+---
+
+## 🔐 Environment Variables
+
+To run this project, you will need to add the following environment variables.
+
+### **Backend (`backend/.env`)**
+\`\`\`env
+PORT=3000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_secret
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+\`\`\`
+
+### **Frontend (`frontend/.env`)**
+\`\`\`env
+VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+VITE_BASE_URL=http://localhost:3000
+\`\`\`
+
+---
+
+## 📡 Key API Endpoints
+
+### Authentication
+- \`POST /api/auth/register\` - Register a new user
+- \`POST /api/auth/login\` - Login user & return JWT
+- \`POST /api/auth/google\` - Authenticate via Google OAuth
+
+### Snippets
+- \`GET /api/snippets/user\` - Get all saved snippets for the authenticated user
+- \`POST /api/snippets/create\` - Save a new code snippet
+- \`PUT /api/snippets/:id\` - Update an existing snippet
+- \`DELETE /api/snippets/:id\` - Delete a snippet
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by Bhumit</p>
+</div>
