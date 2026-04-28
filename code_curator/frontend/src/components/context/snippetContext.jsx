@@ -7,14 +7,12 @@ export const useSnippet = () => useContext(SnippetContext);
 
 export const SnippetProvider = ({ children }) => {
   const [snippets, setSnippets] = useState([]);
-  const accessToken = localStorage.getItem("accessToken");
-  const refreshToken = localStorage.getItem("refreshToken");
 
   const fetchSnippets = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/snippets/user`, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       setSnippets(response.data.snippets);
@@ -28,7 +26,7 @@ export const SnippetProvider = ({ children }) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/snippets/create`, snippetData, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       setSnippets([response.data.snippet, ...snippets]);
@@ -43,7 +41,7 @@ export const SnippetProvider = ({ children }) => {
     try {
       const response = await axios.put(`${import.meta.env.VITE_BASE_URL}/snippets/${id}`, snippetData, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       setSnippets(snippets.map(snippet => 
@@ -60,7 +58,7 @@ export const SnippetProvider = ({ children }) => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/snippets/${id}`, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       return response.data.snippet;
@@ -74,7 +72,7 @@ export const SnippetProvider = ({ children }) => {
     try {
       await axios.delete(`${import.meta.env.VITE_BASE_URL}/snippets/${id}`, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       setSnippets(snippets.filter(snippet => snippet._id !== id));

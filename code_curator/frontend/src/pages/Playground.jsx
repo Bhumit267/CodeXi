@@ -34,7 +34,7 @@ import { BookOpen, List, Loader2, CheckCircle2 } from "lucide-react";
 const Playground = () => {
 
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
-  const [code, setCode] = useState('// Write your code here');
+  const [code, setCode] = useState('// Write your code here\nconsole.log("Hello World");');
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
 
@@ -70,6 +70,44 @@ const Playground = () => {
     }
   }
 
+  const getBoilerplate = (lang, title) => {
+    const safeTitle = title || "Problem";
+    switch (lang) {
+      case 'python':
+        return `# Solve: ${safeTitle}\n\ndef solution():\n    # Write your code here\n    pass`;
+      case 'cpp':
+        return `// Solve: ${safeTitle}\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}`;
+      case 'java':
+        return `// Solve: ${safeTitle}\n\nclass Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`;
+      case 'javascript':
+      default:
+        return `// Solve: ${safeTitle}\n\nfunction solution() {\n  // Write your code here\n}`;
+    }
+  };
+
+  const getStandaloneBoilerplate = (lang) => {
+    switch (lang) {
+      case 'python':
+        return `# Write your code here\nprint("Hello World")`;
+      case 'cpp':
+        return `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    cout << "Hello World" << endl;\n    return 0;\n}`;
+      case 'java':
+        return `class Main {\n    public static void main(String[] args) {\n        // Write your code here\n        System.out.println("Hello World");\n    }\n}`;
+      case 'javascript':
+      default:
+        return `// Write your code here\nconsole.log("Hello World");`;
+    }
+  };
+
+  const handleLanguageChange = (newLang) => {
+    setSelectedLanguage(newLang);
+    if (problemData) {
+      setCode(getBoilerplate(newLang, problemData.questionTitle));
+    } else if (!snippetId) {
+      setCode(getStandaloneBoilerplate(newLang));
+    }
+  };
+
   const loadProblem = async (slug) => {
     setLoadingProblem(true);
     try {
@@ -78,8 +116,7 @@ const Playground = () => {
       if (response.data) {
         setProblemData(response.data);
         setTitle(response.data.questionTitle || slug);
-        // Set some starter code based on language (optional improvement for later)
-        setCode(`// Solve: ${response.data.questionTitle}\n\nfunction solution() {\n  // Write your code here\n}`);
+        setCode(getBoilerplate(selectedLanguage, response.data.questionTitle || slug));
       }
     } catch (error) {
       console.error("Error loading problem:", error);
@@ -120,34 +157,43 @@ const Playground = () => {
 
   const { markProblemAsSolved } = React.useContext(AuthContext || {}); // Safe access if context not imported yet, but we need to import it.
 
-  // FIX: Need to import AuthContext
   const executeCode = async () => {
     try {
-      const res = await axios.post("https://emkc.org/api/v2/piston/execute", {
-        language: selectedLanguage,
-        version: "*",
-        files: [
-          {
-            content: code,
-          }
-        ],
-        stdin: input,
+      const compilerMap = {
+        'javascript': 'nodejs-20.17.0',
+        'python': 'cpython-3.14.0',
+        'cpp': 'gcc-head',
+        'java': 'openjdk-jdk-22+36'
+      };
+      
+      const compiler = compilerMap[selectedLanguage] || 'nodejs-20.17.0';
+
+      const res = await axios.post("https://wandbox.org/api/compile.json", {
+        compiler: compiler,
+        code: code,
+        stdin: input
       });
 
       console.log(res.data);
-      const { stdout, stderr } = res.data.run;
-
+      
       let finalOutput = "";
-      if (stderr) {
-        finalOutput = stderr;
+      if (res.data.compiler_error) {
+        finalOutput = res.data.compiler_error;
+      } else if (res.data.program_error) {
+        finalOutput = res.data.program_error;
+      } else if (res.data.program_output) {
+        finalOutput = res.data.program_output;
+      } else if (res.data.status !== "0") {
+        finalOutput = "Error: " + (res.data.compiler_message || "Execution failed.");
       } else {
-        finalOutput = stdout;
+        finalOutput = "Executed successfully with no output.";
       }
+      
       setOutput(finalOutput);
-      return finalOutput; // Return for submit check
+      return finalOutput;
     } catch (error) {
       console.error("Error executing code:", error);
-      setOutput("Error executing code.");
+      setOutput("Error executing code. " + (error.response?.data?.message || error.message));
       return "Error";
     }
   };
@@ -243,7 +289,7 @@ const Playground = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
                       <SelectTrigger className="border-2 border-white/30 bg-white/10 text-white h-[3.7vh] w-[120px]">
                         <SelectValue placeholder="Language" />
                       </SelectTrigger>
