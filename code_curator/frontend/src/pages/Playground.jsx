@@ -29,7 +29,7 @@ import { AuthContext } from "@/components/context/authContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, List, Loader2, CheckCircle2 } from "lucide-react";
+import { BookOpen, List, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
 
 const Playground = () => {
 
@@ -70,18 +70,44 @@ const Playground = () => {
     }
   }
 
-  const getBoilerplate = (lang, title) => {
-    const safeTitle = title || "Problem";
+  const getBoilerplate = (lang, problem) => {
+    // 1. Check if the API provided official LeetCode code snippets
+    if (problem && problem.codeSnippets && Array.isArray(problem.codeSnippets)) {
+      const langMap = {
+        'javascript': ['JavaScript', 'javascript'],
+        'python': ['Python3', 'Python', 'python'],
+        'cpp': ['C++', 'cpp'],
+        'java': ['Java', 'java']
+      };
+
+      const possibleNames = langMap[lang] || [lang];
+      const snippet = problem.codeSnippets.find(s => 
+        possibleNames.some(name => s.lang === name || s.lang.toLowerCase() === name.toLowerCase())
+      );
+      
+      if (snippet && snippet.code) {
+        return snippet.code;
+      }
+    }
+
+    // 2. Fallback to enhanced custom boilerplate
+    const title = problem?.questionTitle || "Problem";
+    const slug = problem?.titleSlug || problem?.questionTitleSlug || "solution";
+    const functionName = slug.replace(/-/g, '_');
+
     switch (lang) {
       case 'python':
-        return `# Solve: ${safeTitle}\n\ndef solution():\n    # Write your code here\n    pass`;
+        return `# Solve: ${title}\nimport sys\n\ndef ${functionName}():\n    """\n    TODO: Implement your solution here\n    """\n    # Example reading from stdin:\n    # data = sys.stdin.read().split()\n    pass\n\nif __name__ == "__main__":\n    ${functionName}()`;
+      
       case 'cpp':
-        return `// Solve: ${safeTitle}\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}`;
+        return `// Solve: ${title}\n#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <map>\n#include <set>\n\nusing namespace std;\n\nvoid solve() {\n    // Write your code here\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    solve();\n    return 0;\n}`;
+      
       case 'java':
-        return `// Solve: ${safeTitle}\n\nclass Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`;
+        return `// Solve: ${title}\nimport java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your code here\n    }\n}`;
+      
       case 'javascript':
       default:
-        return `// Solve: ${safeTitle}\n\nfunction solution() {\n  // Write your code here\n}`;
+        return `// Solve: ${title}\n\n/**\n * @param {any} input\n * @return {any}\n */\nconst solve = () => {\n  // Write your code here\n  console.log("Solution for ${title}");\n};\n\nsolve();`;
     }
   };
 
@@ -102,7 +128,7 @@ const Playground = () => {
   const handleLanguageChange = (newLang) => {
     setSelectedLanguage(newLang);
     if (problemData) {
-      setCode(getBoilerplate(newLang, problemData.questionTitle));
+      setCode(getBoilerplate(newLang, problemData));
     } else if (!snippetId) {
       setCode(getStandaloneBoilerplate(newLang));
     }
@@ -116,7 +142,7 @@ const Playground = () => {
       if (response.data) {
         setProblemData(response.data);
         setTitle(response.data.questionTitle || slug);
-        setCode(getBoilerplate(selectedLanguage, response.data.questionTitle || slug));
+        setCode(getBoilerplate(selectedLanguage, response.data));
       }
     } catch (error) {
       console.error("Error loading problem:", error);
@@ -300,6 +326,9 @@ const Playground = () => {
                         <SelectItem value="java">Java</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Button className="mx-1 bg-white/20 border-white/30 text-white hover:bg-white/30" variant="outline" size="sm" onClick={() => setCode(getBoilerplate(selectedLanguage, problemData))}>
+                      <RotateCcw className="mr-1 h-4 w-4" /> Reset
+                    </Button>
                     <Button className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg h-[3.7vh]" onClick={executeCode}>
                       Run <TriangleRightIcon className="ml-1 h-4 w-4" />
                     </Button>
